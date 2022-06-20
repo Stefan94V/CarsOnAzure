@@ -35,9 +35,9 @@ jobs:
         inlineScript: |
           #!/bin/bash
            az deployment group create `
-              --name #{{ env.DeploymentName }} `
-              --resource-group #{{ env.ResourceGroupName }} `
-              --template-file #{{ env.BicepFileLocation }} `
-              --TemplateParameterFile #{{ env.BicepFileParametersLocation }}
+              --name ${{ env.DeploymentName }} `
+              --resource-group ${{ env.ResourceGroupName }} `
+              --template-file ${{ env.BicepFileLocation }} `
+              --TemplateParameterFile ${{ env.BicepFileParametersLocation }}
         
        
