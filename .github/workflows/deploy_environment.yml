@@ -4,7 +4,7 @@ name: Deploy Infra
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    environment: development
+    
     env:
       ResourceGroupName: carsonazure-rg
       ResourceGroupLocation: "westeurope"
@@ -16,6 +16,7 @@ jobs:
     - uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
+        environment: development
     - uses: Azure/CLI@v1
       with:
         inlineScript: |
