@@ -11,8 +11,8 @@ jobs:
       ResourceGroupName: carsonazure-rg
       ResourceGroupLocation: "westeurope"
       DeploymentName: carsonazure-dn
-      BicepFileLocation: Deploy/Main.Bicep
-      BicepFileParametersLocation: Deploy/main.parameters.json
+      BicepFileLocation: ./Deploy/Main.Bicep
+      BicepFileParametersLocation: ./Deploy/main.parameters.json
     steps:
     - uses: actions/checkout@master
 
