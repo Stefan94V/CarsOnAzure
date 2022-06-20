@@ -4,6 +4,7 @@ name: Deploy Infra
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    environment: development
     env:
       ResourceGroupName: carsonazure-rg
       ResourceGroupLocation: "westeurope"
