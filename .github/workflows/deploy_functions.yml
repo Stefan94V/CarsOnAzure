@@ -12,6 +12,7 @@ jobs:
       DeploymentName: carsonazure-dn
       FunctionsFolder: ./src/Functions
       FunctionsZipName : functionsApp
+      FunctionsAppName : CarFunctions
     steps:
     - uses: actions/checkout@v2
 
@@ -34,7 +35,7 @@ jobs:
         inlineScript: |
           #!/bin/bash
           az functionapp deployment source config-zip -g ${{ env.ResourceGroupName }} \
-              -n ${{ env.FunctionAppName }} \
+              -n ${{ env.FunctionsAppName }} \
               --src ${{ env.FunctionsZipName }}
         
        
