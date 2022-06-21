@@ -1,0 +1,40 @@
+on: 
+  workflow_dispatch:
+  
+name: Deploy Infra
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: developing
+    env:
+      ResourceGroupName: carsonazure-rg
+      DeploymentName: carsonazure-dn
+      FunctionsFolder: ./src/Functions
+      FunctionsZipName : functionsApp
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Install dependencies
+      run: dotnet publish -c Release ${{ env.FunctionsFolder }} -o ${{ env.FunctionAppName }}
+      
+    - uses: azure/login@v1
+      name: Login
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}    
+          
+    - uses: Azure/CLI@v1
+      name: Publish Function
+      with:
+        inlineScript: |
+          #!/bin/bash
+          az functionapp deployment source config-zip -g ${{ env.ResourceGroupName }} \
+              -n ${{ env.FunctionAppName }} \
+              --src ${{ functionappName }}
+        
+       

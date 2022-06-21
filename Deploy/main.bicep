@@ -2,18 +2,64 @@ param appName string
 param location string = resourceGroup().location
 
 // storage accounts must be between 3 and 24 characters in length and use numbers and lower-case letters only
-var storageAccountName = '${substring(appName,0,10)}${uniqueString(resourceGroup().id)}' 
-var hostingPlanName = '${appName}${uniqueString(resourceGroup().id)}'
-var appInsightsName = '${appName}${uniqueString(resourceGroup().id)}'
-var functionAppName = '${appName}'
+var functionAppName = '${appName}${uniqueString(resourceGroup().id)}-fa'
+var storageAccountName = '${substring(appName,0,8)}${uniqueString(resourceGroup().id)}-sa' 
+var hostingPlanName = '${appName}${uniqueString(resourceGroup().id)}-sa'
+var appInsightsName = '${appName}${uniqueString(resourceGroup().id)}-ai'
+var keyVaultName = '${appName}${uniqueString(resourceGroup().id)}-kv'
+var keyVaultObjectId = guid(appName)
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
-  name: '${substring(storageAccountName,0,10)}${uniqueString(resourceGroup().id)}'
+  name: storageAccountName
   location: location
   kind: 'StorageV2'
   sku: {
     name: 'Standard_LRS'
     tier: 'Standard'
+  }
+}
+
+resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
+  name:keyVaultName
+  location:location
+  properties: {
+    tenantId: subscription().tenantId
+    sku: {
+      family: 'A'
+      name: 'standard'
+    }
+    accessPolicies: [
+      {
+        tenantId: subscription().tenantId
+        objectId: keyVaultObjectId
+        permissions: {
+          secrets: [
+            'all'
+          ]
+          certificates: [
+            'all'
+          ]
+          keys:[
+            'all'
+          ]
+        }
+      }
+    ]
+    enabledForDeployment: true          // VMs can retrieve certificates
+    enabledForTemplateDeployment: true  // ARM can retrieve values
+    enablePurgeProtection: true         // Not allowing to purge key vault or its objects after deletion
+    enableSoftDelete: true              // Deleting a key vault or key/certificate/secret will not remove it completely, but it will be in soft deleted mode for the number of days specified in softDeleteRetentionInDays
+    softDeleteRetentionInDays: 7        // Specifies for how long key vault will be kept in soft deleted mode before being deleted permanently
+    createMode: 'default'               // Creating or updating the key vault (not recovering)
+  }
+}
+
+var blobStorageConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
+
+resource cosmosSecretKey 'Microsoft.KeyVault/vaults/secrets@2021-10-01' = {
+  name: '${keyVaultName}/blobStorageConnectionString'
+  properties: {
+    value: blobStorageConnectionString
   }
 }
 
@@ -81,5 +127,8 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
     appInsights
     hostingPlan
     storageAccount
+    keyVault
   ]
 }
+
+output functionAppName string = functionApp.name
