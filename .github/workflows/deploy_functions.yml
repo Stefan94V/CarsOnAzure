@@ -12,7 +12,7 @@ jobs:
       DeploymentName: carsonazure-dn
       FunctionsFolder: ./src/Functions
       FunctionsZipName : functionsApp
-      FunctionsAppName : CarFunctions
+      FunctionsAppName : carsonazure
     steps:
     - uses: actions/checkout@v2
 
