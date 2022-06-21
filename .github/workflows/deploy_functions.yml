@@ -20,8 +20,8 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Install dependencies
-      run: dotnet publish -c Release ${{ env.FunctionsFolder }} -o ${{ env.FunctionsZipName }}
+    - name: Dotnet Publish
+      run: dotnet publish -c Release -n ${{ env.FunctionsFolder }} -o ${{ env.FunctionsZipName }}
       
     - uses: azure/login@v1
       name: Login
@@ -29,7 +29,7 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}    
           
     - uses: Azure/CLI@v1
-      name: Publish Function
+      name: Deploy Function
       with:
         inlineScript: |
           #!/bin/bash
