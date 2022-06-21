@@ -11,7 +11,7 @@ jobs:
       ResourceGroupName: carsonazure-rg
       DeploymentName: carsonazure-dn
       FunctionsFolder: ./src/Functions
-      FunctionsZipName : functionsApp
+      FunctionsZipName : functionsApp.zip
       FunctionsAppName : carsonazure
     steps:
     - uses: actions/checkout@v2
