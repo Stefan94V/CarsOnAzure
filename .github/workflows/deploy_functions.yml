@@ -11,7 +11,8 @@ jobs:
       ResourceGroupName: carsonazure-rg
       DeploymentName: carsonazure-dn
       FunctionsFolder: ./src/Functions
-      FunctionsZipName : functionsApp.zip
+      FunctionsZipOutputFolder : output/FunctionsApp
+      FunctionsZipName: carsonazure_functions.zip
       FunctionsAppName : carsonazure
     steps:
     - uses: actions/checkout@v2
@@ -22,8 +23,13 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Dotnet Publish
-      run: dotnet publish -c Release ${{ env.FunctionsFolder }} -o ${{ env.FunctionsZipName }}
+      run: dotnet publish -c Release ${{ env.FunctionsFolder }} -o ${{ env.FunctionsZipOutputFolder }}
       
+    - uses: montudor/action-zip@v1
+      name: Zip Functions app
+      with:
+        args: zip -qq -r  ${{ env.FunctionsZipName }}  ${{ env.FunctionsZipOutputFolder }}
+
     - uses: azure/login@v1
       name: Login
       with:
@@ -36,6 +42,6 @@ jobs:
           #!/bin/bash
           az functionapp deployment source config-zip -g ${{ env.ResourceGroupName }} \
               -n ${{ env.FunctionsAppName }} \
-              --src ${{ env.FunctionsZipName }}
+              --src ${{ FunctionsZipName }}
         
        
