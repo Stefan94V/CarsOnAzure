@@ -21,7 +21,7 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Install dependencies
-      run: dotnet publish -c Release ${{ env.FunctionsFolder }} -o ${{ env.FunctionAppName }}
+      run: dotnet publish -c Release ${{ env.FunctionsFolder }} -o ${{ env.FunctionsZipName }}
       
     - uses: azure/login@v1
       name: Login
@@ -35,6 +35,6 @@ jobs:
           #!/bin/bash
           az functionapp deployment source config-zip -g ${{ env.ResourceGroupName }} \
               -n ${{ env.FunctionAppName }} \
-              --src ${{ functionappName }}
+              --src ${{ env.FunctionsZipName }}
         
        
