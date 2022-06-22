@@ -4,6 +4,12 @@
     "parameters": {
       "appName": {
         "value": "carsonazure"
+      },
+      "carsJsonOutputContainerName":{
+        "value": "output"
+      },
+      "carsJsonFileName":{
+        "value": "cars.json"
       }
     }
   }

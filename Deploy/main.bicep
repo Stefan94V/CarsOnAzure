@@ -1,8 +1,11 @@
 param appName string
 param location string = resourceGroup().location
+param carsJsonOutputContainerName string 
+param carsJsonFileName string
 
 // storage accounts must be between 3 and 24 characters in length and use numbers and lower-case letters only
 var functionAppName = '${appName}${uniqueString(resourceGroup().id)}-fa'
+var webApiAppName = '${appName}${uniqueString(resourceGroup().id)}-api'
 var storageAccountName = '${substring(appName,0,8)}${uniqueString(resourceGroup().id)}-sa' 
 var hostingPlanName = '${appName}${uniqueString(resourceGroup().id)}-sa'
 var appInsightsName = '${appName}${uniqueString(resourceGroup().id)}-ai'
@@ -87,6 +90,39 @@ resource hostingPlan 'Microsoft.Web/serverfarms@2020-10-01' = {
   }
 }
 
+var storageAccountConnectionString  = 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}' 
+resource webApiApp 'Microsoft.Web/sites@2021-03-01' ={
+  name: webApiAppName
+  location: location
+  kind: ''
+  properties: {
+    httpsOnly: true
+    serverFarmId: hostingPlan.id
+    siteConfig: {
+      appSettings: [
+        {
+          'name': 'APPINSIGHTS_INSTRUMENTATIONKEY'
+          'value': appInsights.properties.InstrumentationKey
+        }
+        {
+          'name': 'AzureSettingsOptions_AzureStorageConnectionString'
+          value: storageAccountConnectionString
+        }
+        {
+          'name': 'AzureSettingsOptions_CarsContainerName'
+          value: carsJsonOutputContainerName
+        }
+        {
+          'name': 'AzureSettingsOptions_CarsJsonFileName'
+          value: carsJsonFileName
+        }
+    ]}
+  }
+  dependsOn: [
+    keyVault
+  ]
+}
+
 resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
   name: functionAppName
   location: location
@@ -103,7 +139,7 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
         }
         {
           name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
+          value: storageAccountConnectionString
         }
         {
           'name': 'FUNCTIONS_EXTENSION_VERSION'
@@ -115,7 +151,7 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
         }
         {
           name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
+          value: storageAccountConnectionString
         }
         // WEBSITE_CONTENTSHARE will also be auto-generated - https://docs.microsoft.com/en-us/azure/azure-functions/functions-app-settings#website_contentshare
         // WEBSITE_RUN_FROM_PACKAGE will be set to 1 by func azure functionapp publish
@@ -124,11 +160,9 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
   }
 
   dependsOn: [
-    appInsights
-    hostingPlan
-    storageAccount
     keyVault
   ]
 }
 
-output functionAppName string = functionApp.name
+output functionAppOutputName string = functionApp.name
+output webApiAppOutputName string = webApiApp.name

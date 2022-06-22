@@ -1,0 +1,48 @@
+on: 
+  workflow_dispatch:
+  
+name: Deploy Api
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: developing
+    env:
+      ResourceGroupName: carsonazure-rg
+      DeploymentName: carsonazure-dn
+      ApiFolder: ./src/Services/Cars/Cars.api
+      ApiZipOutputFolder : output/CarsApi
+      ApiZipName: carsonazure_api.zip
+      ApiAppName : carsonazure
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Dotnet Publish
+      run: dotnet publish -c Release ${{ env.ApiFolder }} -o ${{ env.ApiZipOutputFolder }}
+      
+    - uses: montudor/action-zip@v1
+      name: Zip Api app
+      with:
+        args: zip -qq -r  ${{ env.ApiZipName }}  ${{ env.ApiZipOutputFolder }}
+
+    - uses: azure/login@v1
+      name: Login
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}    
+          
+    - uses: Azure/CLI@v1
+      name: Deploy Function
+      with:
+        inlineScript: |
+          #!/bin/bash
+          az webapp deploy \ 
+          -g ${{ env.ResourceGroupName }} \
+          -n ${{ env.ApiAppName }} \ 
+          --src-path '${{env.ApiZipOutputFolder}}/${{ env.ApiZipName }}'
+   
+       
